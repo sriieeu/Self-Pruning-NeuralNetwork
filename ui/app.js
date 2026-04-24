@@ -405,25 +405,62 @@ const CIFAR10_CLASSES = [
   { name: "Truck",      emoji: "🚛" },
 ];
 
+// ── API base (same origin when served via server.py) ─────────────────
+const API_BASE = "http://127.0.0.1:5000";
+let _inferMode   = "sim"; // "sim" | "live"
+let _uploadedFile = null;
+
 function initImageInference() {
   const dropZone    = document.getElementById("dropZone");
   const imgInput    = document.getElementById("imgInput");
   const browseBtn   = document.getElementById("browseBtn");
-  const previewArea = document.getElementById("previewArea");
   const runInferBtn = document.getElementById("runInferBtn");
   const inferResults= document.getElementById("inferResults");
   const resetBtn    = document.getElementById("resetBtn");
+  const modeSimBtn  = document.getElementById("modeSimBtn");
+  const modeLiveBtn = document.getElementById("modeLiveBtn");
+  const ckptRow     = document.getElementById("ckptRow");
+  const ckptRefresh = document.getElementById("ckptRefresh");
 
   if (!dropZone) return;
 
-  // Click / browse
+  // ── Mode toggle ──────────────────────────────────────────────────────
+  function setMode(mode) {
+    _inferMode = mode;
+    modeSimBtn.classList.toggle("active",  mode === "sim");
+    modeLiveBtn.classList.toggle("active", mode === "live");
+    ckptRow.style.display = mode === "live" ? "flex" : "none";
+    if (mode === "live") fetchCheckpoints();
+  }
+  modeSimBtn.addEventListener("click",  () => setMode("sim"));
+  modeLiveBtn.addEventListener("click", () => setMode("live"));
+
+  // ── Checkpoint list ──────────────────────────────────────────────────
+  async function fetchCheckpoints() {
+    const sel = document.getElementById("ckptSelect");
+    try {
+      const res  = await fetch(`${API_BASE}/api/checkpoints`);
+      const data = await res.json();
+      sel.innerHTML = `<option value="">— auto-detect —</option>`;
+      data.checkpoints.forEach(c => {
+        const opt = document.createElement("option");
+        opt.value = c.path; opt.textContent = c.label;
+        sel.appendChild(opt);
+      });
+    } catch {
+      sel.innerHTML = `<option value="">⚠ Server offline — run: python server.py</option>`;
+    }
+  }
+  ckptRefresh && ckptRefresh.addEventListener("click", fetchCheckpoints);
+
+  // ── File input ───────────────────────────────────────────────────────
   browseBtn.addEventListener("click", (e) => { e.stopPropagation(); imgInput.click(); });
-  dropZone.addEventListener("click", () => imgInput.click());
+  dropZone.addEventListener("click",  () => imgInput.click());
   imgInput.addEventListener("change", () => {
-    if (imgInput.files[0]) loadImage(imgInput.files[0]);
+    if (imgInput.files[0]) { _uploadedFile = imgInput.files[0]; loadImage(_uploadedFile); }
   });
 
-  // Drag-and-drop
+  // ── Drag-and-drop ────────────────────────────────────────────────────
   dropZone.addEventListener("dragover", (e) => {
     e.preventDefault(); dropZone.classList.add("drag-over");
   });
@@ -431,28 +468,76 @@ function initImageInference() {
   dropZone.addEventListener("drop", (e) => {
     e.preventDefault(); dropZone.classList.remove("drag-over");
     const file = e.dataTransfer.files[0];
-    if (file && file.type.startsWith("image/")) loadImage(file);
+    if (file && file.type.startsWith("image/")) { _uploadedFile = file; loadImage(file); }
   });
 
-  // Run button
-  runInferBtn.addEventListener("click", () => {
-    runInferBtn.textContent = "⏳ Processing…";
+  // ── Run button ───────────────────────────────────────────────────────
+  runInferBtn.addEventListener("click", async () => {
+    const svg = `<svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/></svg>`;
+    runInferBtn.innerHTML = "⏳ Processing…";
     runInferBtn.classList.add("running");
-    setTimeout(() => {
-      runInference();
-      runInferBtn.textContent = "✓ Done";
-    }, 600);
+    try {
+      if (_inferMode === "live") {
+        await runInferenceAPI();
+      } else {
+        await new Promise(r => setTimeout(r, 600));
+        runInferenceSimulated();
+      }
+    } catch(err) {
+      console.error(err);
+      alert("Inference error: " + err.message);
+    } finally {
+      runInferBtn.innerHTML = svg + " Run Inference";
+      runInferBtn.classList.remove("running");
+    }
   });
 
-  // Reset
+  // ── Reset ────────────────────────────────────────────────────────────
   resetBtn.addEventListener("click", () => {
     inferResults.style.display = "none";
-    previewArea.style.display  = "none";
-    dropZone.style.display     = "flex";
+    document.getElementById("previewArea").style.display = "none";
+    dropZone.style.display = "flex";
     imgInput.value = "";
-    runInferBtn.textContent = "▶ Run Inference";
-    runInferBtn.classList.remove("running");
+    _uploadedFile  = null;
   });
+}
+
+// ── Real API call ──────────────────────────────────────────────────────
+async function runInferenceAPI() {
+  if (!_uploadedFile) throw new Error("No image loaded.");
+  const ckptSel = document.getElementById("ckptSelect");
+  const form    = new FormData();
+  form.append("image", _uploadedFile);
+  if (ckptSel && ckptSel.value) form.append("checkpoint", ckptSel.value);
+
+  const res  = await fetch(`${API_BASE}/api/infer`, { method: "POST", body: form });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+
+  const pred = data.prediction;
+  const ns   = data.neuron_stats;
+
+  document.getElementById("resultBadge").textContent = pred.emoji;
+  document.getElementById("resultClass").textContent =
+    pred.class.charAt(0).toUpperCase() + pred.class.slice(1);
+  document.getElementById("resultConf").textContent =
+    `${(pred.confidence * 100).toFixed(1)}% confidence`;
+  document.getElementById("rsActive").textContent   = ns.active.toLocaleString();
+  document.getElementById("rsPruned").textContent   = ns.pruned.toLocaleString();
+  document.getElementById("rsSparsity").textContent = `${(ns.sparsity * 100).toFixed(1)}%`;
+
+  const modeTag = document.getElementById("resultModeTag");
+  modeTag.textContent = "⚡ Real Model";
+  modeTag.className   = "result-mode-tag live";
+
+  // Build sorted prob list matching CIFAR10_CLASSES index
+  const sorted = data.probabilities
+    .map((p, i) => ({ p: p.prob, i: CIFAR10_CLASSES.findIndex(c => c.name.toLowerCase() === p.class) }))
+    .sort((a, b) => b.p - a.p);
+  renderProbBars(sorted, pred.class);
+
+  document.getElementById("inferResults").style.display = "flex";
+  document.getElementById("inferResults").scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
 
 // ── Load & render uploaded image ──────────────────────────────────────
@@ -563,8 +648,33 @@ function computeImgStats(data) {
   document.getElementById("statEntropy").textContent = entropy.toFixed(2) + " bit";
 }
 
-// ── Simulate network inference ────────────────────────────────────────
-function runInference() {
+// ── Shared: render probability bars ──────────────────────────────────
+function renderProbBars(sorted, topClassName) {
+  const container = document.getElementById("probBars");
+  container.innerHTML = "";
+  sorted.forEach(({ p, i }) => {
+    const cls   = CIFAR10_CLASSES[i];
+    if (!cls) return;
+    const isTop = cls.name.toLowerCase() === (topClassName || "").toLowerCase();
+    const pct   = (p * 100).toFixed(1);
+    const row   = document.createElement("div");
+    row.className = "prob-row";
+    row.innerHTML = `
+      <div class="prob-class-name ${isTop ? 'top-class' : ''}">${cls.emoji} ${cls.name}</div>
+      <div class="prob-track">
+        <div class="prob-fill ${isTop ? 'top-fill' : ''}" style="width:0%" data-target="${p*100}%"></div>
+      </div>
+      <div class="prob-pct ${isTop ? 'top-pct' : ''}">${pct}%</div>
+    `;
+    container.appendChild(row);
+  });
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    document.querySelectorAll(".prob-fill").forEach(el => { el.style.width = el.dataset.target; });
+  }));
+}
+
+// ── Simulated inference (client-side colour stats) ────────────────────
+function runInferenceSimulated() {
   const { rMean, gMean, bMean, lum, contrast, entropy } = _imgFeatures;
 
   // Colour bias vector — produces a soft prior over classes from RGB stats
@@ -592,7 +702,8 @@ function runInference() {
   const probs = exps.map(e => e / sumE);
 
   // Find top class
-  const topIdx = probs.indexOf(Math.max(...probs));
+  const topIdx    = probs.indexOf(Math.max(...probs));
+  const topName   = CIFAR10_CLASSES[topIdx].name;
   const confidence = (probs[topIdx] * 100).toFixed(1);
 
   // Simulate sparsity (use current λ selection)
@@ -603,7 +714,6 @@ function runInference() {
   const pruned = Math.round(totalNeurons * sparsityPct / 100);
   const active = totalNeurons - pruned;
 
-  // Fill result panel
   document.getElementById("resultBadge").textContent = CIFAR10_CLASSES[topIdx].emoji;
   document.getElementById("resultClass").textContent = CIFAR10_CLASSES[topIdx].name;
   document.getElementById("resultConf").textContent  = `${confidence}% confidence`;
@@ -611,41 +721,13 @@ function runInference() {
   document.getElementById("rsPruned").textContent    = pruned.toLocaleString();
   document.getElementById("rsSparsity").textContent  = `${sparsityPct}%`;
 
-  // Probability bars
-  const container = document.getElementById("probBars");
-  container.innerHTML = "";
-  const sorted = probs
-    .map((p, i) => ({ p, i }))
-    .sort((a, b) => b.p - a.p);
+  const modeTag = document.getElementById("resultModeTag");
+  modeTag.textContent = "🧪 Simulated";
+  modeTag.className   = "result-mode-tag sim";
 
-  sorted.forEach(({ p, i }) => {
-    const isTop = i === topIdx;
-    const pct = (p * 100).toFixed(1);
-    const row = document.createElement("div");
-    row.className = "prob-row";
-    row.innerHTML = `
-      <div class="prob-class-name ${isTop ? "top-class" : ""}">
-        ${CIFAR10_CLASSES[i].emoji} ${CIFAR10_CLASSES[i].name}
-      </div>
-      <div class="prob-track">
-        <div class="prob-fill ${isTop ? "top-fill" : ""}" style="width:0%"
-             data-target="${p * 100}%"></div>
-      </div>
-      <div class="prob-pct ${isTop ? "top-pct" : ""}">${pct}%</div>
-    `;
-    container.appendChild(row);
-  });
+  const sorted = probs.map((p, i) => ({ p, i })).sort((a, b) => b.p - a.p);
+  renderProbBars(sorted, topName);
 
-  // Animate bars
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      document.querySelectorAll(".prob-fill").forEach(el => {
-        el.style.width = el.dataset.target;
-      });
-    });
-  });
-
-  // Show results
   document.getElementById("inferResults").style.display = "flex";
   document.getElementById("inferResults").scrollIntoView({ behavior: "smooth", block: "nearest" });
 }

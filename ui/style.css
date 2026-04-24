@@ -245,7 +245,7 @@ input[type=range] { appearance: none; width: 100%; }
 
 /* Slider */
 .slider {
-  -webkit-appearance: none; height: 4px; border-radius: 2px;
+  -webkit-appearance: none; appearance: none; height: 4px; border-radius: 2px;
   background: var(--border); outline: none; cursor: pointer;
 }
 .slider::-webkit-slider-thumb {
@@ -536,10 +536,40 @@ input[type=range] { appearance: none; width: 100%; }
 
 .reset-btn { width: 100%; justify-content: center; }
 
+/* Mode toggle */
+.mode-toggle-row { display: flex; flex-direction: column; gap: 10px; }
+.mode-toggle { display: flex; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.mode-btn {
+  flex: 1; padding: 9px 14px; background: var(--bg-panel); border: none;
+  color: var(--muted); font-size: .82rem; font-weight: 500; cursor: pointer; transition: all .18s;
+}
+.mode-btn.active { background: #58a6ff1a; color: var(--blue); }
+.mode-btn[data-mode="live"].active { background: #3fb9501a; color: var(--green); }
+.ckpt-row { display: flex; align-items: center; gap: 8px; }
+.ckpt-label { font-size: .75rem; color: var(--muted); white-space: nowrap; }
+.ckpt-select {
+  flex: 1; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px;
+  color: var(--text); font-size: .78rem; padding: 6px 10px; font-family: var(--mono);
+}
+.ckpt-refresh {
+  background: none; border: 1px solid var(--border); border-radius: 6px; color: var(--muted);
+  font-size: 1rem; padding: 4px 8px; cursor: pointer; transition: all .18s;
+}
+.ckpt-refresh:hover { color: var(--blue); border-color: var(--blue); }
+
+/* Result mode tag */
+.result-mode-tag {
+  margin-left: auto; font-size: .7rem; font-weight: 600; border-radius: 6px;
+  padding: 3px 10px; border: 1px solid; align-self: flex-start;
+}
+.result-mode-tag.sim  { color: var(--blue);  border-color: #58a6ff44; background: #58a6ff0d; }
+.result-mode-tag.live { color: var(--green); border-color: #3fb95044; background: #3fb9500d; }
+
 @media (max-width: 900px) {
   .test-grid { grid-template-columns: 1fr; }
   .img-stats { grid-template-columns: repeat(2, 1fr); }
 }
+
 
 /* ── ANIMATIONS ────────────────────────────────────────────────────── */
 @keyframes fadeInUp {

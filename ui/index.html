@@ -575,6 +575,21 @@
             <div class="img-stat"><span class="img-stat-label">Entropy</span><span class="img-stat-val" id="statEntropy">—</span></div>
           </div>
 
+          <!-- Mode toggle + checkpoint -->
+          <div class="mode-toggle-row">
+            <div class="mode-toggle" id="modeToggle">
+              <button class="mode-btn active" id="modeSimBtn" data-mode="sim">🧪 Simulated</button>
+              <button class="mode-btn" id="modeLiveBtn" data-mode="live">⚡ Real Model API</button>
+            </div>
+            <div class="ckpt-row" id="ckptRow" style="display:none">
+              <label for="ckptSelect" class="ckpt-label">Checkpoint</label>
+              <select id="ckptSelect" class="ckpt-select">
+                <option value="">— auto-detect —</option>
+              </select>
+              <button class="ckpt-refresh" id="ckptRefresh" title="Refresh checkpoint list">↻</button>
+            </div>
+          </div>
+
           <button class="btn btn-primary run-btn" id="runInferBtn">
             <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/></svg>
             Run Inference
@@ -590,6 +605,7 @@
             <div class="result-class" id="resultClass">Predicted Class</div>
             <div class="result-conf" id="resultConf">—% confidence</div>
           </div>
+          <div class="result-mode-tag" id="resultModeTag"></div>
         </div>
 
         <div class="result-sparsity-row">
