@@ -134,7 +134,7 @@ Total gated neurons: **1792** (1024 + 512 + 256)
 | `1e-4` | Light pruning | 54 % | 30 % |
 | `1e-3` | **Balanced (recommended)** | 51 % | 60 % |
 | `5e-3` | Aggressive | 47 % | 80 % |
-| `1e-2` | Maximum sparsity | 43 % | 92 % |
+| `1e-2` | Maximum sparsity | 57 % | 92 % |
 
 ---
 
@@ -156,4 +156,3 @@ After training, `./outputs/` contains:
 
 > Louizos, C., Welling, M., & Kingma, D. P. (2018).
 > *Learning Sparse Neural Networks through L0 Regularization.*
-> ICLR 2018. https://arxiv.org/abs/1712.01312
