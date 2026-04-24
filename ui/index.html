@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Self-Pruning NN | Hard Concrete Gates Dashboard</title>
+  <meta name="description" content="Interactive dashboard for the Self-Pruning Neural Network with Hard Concrete Gates — visualise training dynamics, gate distributions, and λ trade-offs." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ── HEADER ─────────────────────────────────────────────────────────── -->
+<header class="site-header">
+  <div class="header-inner">
+    <div class="brand">
+      <div class="brand-icon">
+        <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="18" cy="18" r="17" stroke="url(#grad1)" stroke-width="2"/>
+          <circle cx="10" cy="12" r="3" fill="#58a6ff"/>
+          <circle cx="26" cy="12" r="3" fill="#58a6ff"/>
+          <circle cx="10" cy="24" r="3" fill="#3fb950"/>
+          <circle cx="26" cy="24" r="3" fill="#3fb950"/>
+          <circle cx="18" cy="18" r="4" fill="#f0883e"/>
+          <line x1="13" y1="12" x2="14" y2="16" stroke="#58a6ff" stroke-width="1.5" stroke-opacity="0.6"/>
+          <line x1="23" y1="12" x2="22" y2="16" stroke="#58a6ff" stroke-width="1.5" stroke-opacity="0.6"/>
+          <line x1="13" y1="24" x2="14" y2="20" stroke="#3fb950" stroke-width="1.5" stroke-opacity="0.6"/>
+          <line x1="23" y1="24" x2="22" y2="20" stroke="#3fb950" stroke-width="1.5" stroke-opacity="0.6"/>
+          <defs>
+            <linearGradient id="grad1" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#58a6ff"/>
+              <stop offset="1" stop-color="#bc8cff"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <h1>Self-Pruning NN</h1>
+        <span class="brand-sub">Hard Concrete Gates · CIFAR-10</span>
+      </div>
+    </div>
+    <nav class="header-nav">
+      <a href="#overview" class="nav-link active" data-section="overview">Overview</a>
+      <a href="#architecture" class="nav-link" data-section="architecture">Architecture</a>
+      <a href="#configure" class="nav-link" data-section="configure">Configure</a>
+      <a href="#results" class="nav-link" data-section="results">Results</a>
+      <a href="#theory" class="nav-link" data-section="theory">Theory</a>
+      <a href="#test" class="nav-link nav-link-test" data-section="test">🔬 Test Image</a>
+    </nav>
+    <div class="header-badge">
+      <span class="badge-dot"></span> Louizos et al., ICLR 2018
+    </div>
+  </div>
+</header>
+
+<!-- ── HERO ───────────────────────────────────────────────────────────── -->
+<section id="overview" class="hero">
+  <div class="hero-bg"></div>
+  <div class="container hero-content">
+    <div class="hero-text">
+      <div class="hero-tag">Differentiable Pruning · L0 Regularisation</div>
+      <h2 class="hero-title">
+        Networks that <span class="gradient-text">prune themselves</span><br/>
+        during training
+      </h2>
+      <p class="hero-description">
+        No post-training step. No iterative surgery. Using
+        <strong>Hard Concrete Gates</strong>, each neuron learns whether to
+        stay alive or die — differentiably, end-to-end, on CIFAR-10.
+      </p>
+      <div class="hero-stats">
+        <div class="stat-card">
+          <span class="stat-val" id="stat-neurons">1,792</span>
+          <span class="stat-label">Gated Neurons</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-val gradient-text">3</span>
+          <span class="stat-label">Prunable Layers</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-val" style="color:var(--green)">~80%</span>
+          <span class="stat-label">Max Sparsity (λ=5e-3)</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-val" style="color:var(--orange)">~54%</span>
+          <span class="stat-label">Best Test Acc (λ=1e-4)</span>
+        </div>
+      </div>
+      <div class="hero-actions">
+        <a href="#configure" class="btn btn-primary">
+          <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/></svg>
+          Configure & Simulate
+        </a>
+        <a href="#theory" class="btn btn-ghost">
+          <svg viewBox="0 0 20 20" fill="currentColor"><path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.255 0 2.443.29 3.5.804V4.804zm1 0v10.392a7.968 7.968 0 013.5-.196c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804z"/></svg>
+          Read Theory
+        </a>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="network-diagram" id="networkDiagram"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ── ARCHITECTURE ────────────────────────────────────────────────────── -->
+<section id="architecture" class="section">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-tag">Model</div>
+      <h2 class="section-title">Network Architecture</h2>
+      <p class="section-desc">A feed-forward network with Hard Concrete gates on every hidden neuron. The classifier head is always kept — only hidden neurons are candidates for pruning.</p>
+    </div>
+
+    <div class="arch-flow">
+      <div class="arch-node input-node">
+        <div class="arch-node-icon">📷</div>
+        <div class="arch-node-label">Input</div>
+        <div class="arch-node-dim">3 × 32 × 32</div>
+        <div class="arch-node-flat">→ flatten → 3072</div>
+      </div>
+
+      <div class="arch-arrow">→</div>
+
+      <div class="arch-layer prunable">
+        <div class="arch-layer-tag">Prunable</div>
+        <div class="arch-layer-name">PrunableLinear</div>
+        <div class="arch-layer-dims">3072 → <strong>1024</strong></div>
+        <div class="arch-layer-ops">
+          <span class="op-tag">BatchNorm</span>
+          <span class="op-tag">ReLU</span>
+          <span class="op-tag gate-tag">Gate ×1024</span>
+        </div>
+        <div class="gate-bar" id="gateBar1">
+          <div class="gate-fill" style="width:40%"></div>
+        </div>
+        <div class="gate-label"><span id="pruned1">~410</span> neurons pruned at λ=1e-3</div>
+      </div>
+
+      <div class="arch-arrow">→</div>
+
+      <div class="arch-layer prunable">
+        <div class="arch-layer-tag">Prunable</div>
+        <div class="arch-layer-name">PrunableLinear</div>
+        <div class="arch-layer-dims">1024 → <strong>512</strong></div>
+        <div class="arch-layer-ops">
+          <span class="op-tag">BatchNorm</span>
+          <span class="op-tag">ReLU</span>
+          <span class="op-tag gate-tag">Gate ×512</span>
+        </div>
+        <div class="gate-bar" id="gateBar2">
+          <div class="gate-fill" style="width:55%"></div>
+        </div>
+        <div class="gate-label"><span id="pruned2">~281</span> neurons pruned at λ=1e-3</div>
+      </div>
+
+      <div class="arch-arrow">→</div>
+
+      <div class="arch-layer prunable">
+        <div class="arch-layer-tag">Prunable</div>
+        <div class="arch-layer-name">PrunableLinear</div>
+        <div class="arch-layer-dims">512 → <strong>256</strong></div>
+        <div class="arch-layer-ops">
+          <span class="op-tag">BatchNorm</span>
+          <span class="op-tag">ReLU</span>
+          <span class="op-tag gate-tag">Gate ×256</span>
+        </div>
+        <div class="gate-bar" id="gateBar3">
+          <div class="gate-fill" style="width:70%"></div>
+        </div>
+        <div class="gate-label"><span id="pruned3">~179</span> neurons pruned at λ=1e-3</div>
+      </div>
+
+      <div class="arch-arrow">→</div>
+
+      <div class="arch-layer classifier-layer">
+        <div class="arch-layer-tag fixed-tag">Fixed</div>
+        <div class="arch-layer-name">Linear</div>
+        <div class="arch-layer-dims">256 → <strong>10</strong></div>
+        <div class="arch-layer-ops">
+          <span class="op-tag">Softmax</span>
+        </div>
+      </div>
+
+      <div class="arch-arrow">→</div>
+
+      <div class="arch-node output-node">
+        <div class="arch-node-icon">🏷️</div>
+        <div class="arch-node-label">Output</div>
+        <div class="arch-node-dim">10 classes</div>
+        <div class="arch-node-flat">CIFAR-10</div>
+      </div>
+    </div>
+
+    <!-- Loss formula card -->
+    <div class="formula-card">
+      <h3 class="formula-title">Loss Function</h3>
+      <div class="formula-body">
+        <span class="formula-text">
+          <span class="formula-big">ℒ</span> = CrossEntropy +
+          <span class="formula-lambda">λ</span> ×
+          <span class="fraction"><span class="numerator">L0 penalty</span><span class="denominator">total neurons</span></span>
+        </span>
+        <div class="formula-note">
+          L0 penalty = Σᵢ σ( log αᵢ − β · log(−γ/ζ) ) &nbsp;·&nbsp; ζ=1.1, γ=−0.1
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── CONFIGURE ───────────────────────────────────────────────────────── -->
+<section id="configure" class="section dark-section">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-tag">Simulator</div>
+      <h2 class="section-title">Configure Training Run</h2>
+      <p class="section-desc">Adjust hyperparameters and simulate expected outcomes using the λ selection guide from the research paper.</p>
+    </div>
+
+    <div class="config-grid">
+      <!-- Left: controls -->
+      <div class="config-panel">
+        <h3 class="panel-title">Hyperparameters</h3>
+
+        <div class="control-group">
+          <label for="lambdaSelect">λ (Sparsity Regularisation Weight)</label>
+          <div class="multi-select" id="lambdaSelect">
+            <button class="ms-btn" data-val="1e-5">1e-5</button>
+            <button class="ms-btn active" data-val="1e-4">1e-4</button>
+            <button class="ms-btn active" data-val="1e-3">1e-3</button>
+            <button class="ms-btn active" data-val="5e-3">5e-3</button>
+            <button class="ms-btn" data-val="1e-2">1e-2</button>
+          </div>
+          <div class="control-hint">Select one or more λ values to compare</div>
+        </div>
+
+        <div class="control-group">
+          <label for="epochsSlider">Epochs: <span id="epochsVal">30</span></label>
+          <input type="range" id="epochsSlider" min="5" max="100" value="30" step="5" class="slider" />
+          <div class="slider-ticks"><span>5</span><span>50</span><span>100</span></div>
+        </div>
+
+        <div class="control-group">
+          <label for="tempSlider">Temperature β: <span id="tempVal">0.667</span></label>
+          <input type="range" id="tempSlider" min="0.1" max="1.0" value="0.667" step="0.001" class="slider" />
+          <div class="slider-ticks"><span>0.1<br/><small>Binary</small></span><span>0.667<br/><small>Default</small></span><span>1.0<br/><small>Soft</small></span></div>
+        </div>
+
+        <div class="control-group">
+          <label for="batchSlider">Batch Size: <span id="batchVal">256</span></label>
+          <input type="range" id="batchSlider" min="32" max="512" value="256" step="32" class="slider" />
+          <div class="slider-ticks"><span>32</span><span>256</span><span>512</span></div>
+        </div>
+
+        <div class="control-group">
+          <label for="lrSlider">Learning Rate: <span id="lrVal">1e-3</span></label>
+          <input type="range" id="lrSlider" min="-5" max="-2" value="-3" step="0.5" class="slider" />
+          <div class="slider-ticks"><span>1e-5</span><span>1e-3</span><span>1e-2</span></div>
+        </div>
+
+        <div class="control-group">
+          <label>Device</label>
+          <div class="device-toggle">
+            <button class="device-btn active" id="cpuBtn" data-dev="cpu">🖥 CPU</button>
+            <button class="device-btn" id="cudaBtn" data-dev="cuda">⚡ CUDA / GPU</button>
+          </div>
+        </div>
+
+        <div class="cmd-preview">
+          <div class="cmd-label">CLI Command Preview</div>
+          <code id="cmdPreview">python main.py --lambdas 1e-4 1e-3 5e-3 --epochs 30 --temperature 0.667 --batch_size 256 --lr 1e-3</code>
+          <button class="copy-btn" id="copyCmd" title="Copy to clipboard">
+            <svg viewBox="0 0 20 20" fill="currentColor"><path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"/><path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"/></svg>
+            Copy
+          </button>
+        </div>
+      </div>
+
+      <!-- Right: prediction cards -->
+      <div class="prediction-panel">
+        <h3 class="panel-title">Expected Outcomes</h3>
+        <div class="prediction-cards" id="predCards"></div>
+
+        <div class="lambda-table-wrap">
+          <h4 class="table-title">λ Selection Guide</h4>
+          <table class="lambda-table">
+            <thead>
+              <tr><th>λ</th><th>Profile</th><th>~Accuracy</th><th>~Sparsity</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>1e-5</code></td><td>Near-dense baseline</td><td>56%</td><td>10%</td></tr>
+              <tr class="row-highlight"><td><code>1e-4</code></td><td>Light pruning</td><td>54%</td><td>30%</td></tr>
+              <tr class="row-highlight recommended"><td><code>1e-3</code></td><td>⭐ Balanced (recommended)</td><td>51%</td><td>60%</td></tr>
+              <tr class="row-highlight"><td><code>5e-3</code></td><td>Aggressive</td><td>47%</td><td>80%</td></tr>
+              <tr><td><code>1e-2</code></td><td>Maximum sparsity</td><td>43%</td><td>92%</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Temperature guide -->
+        <div class="beta-guide">
+          <h4 class="table-title">Temperature β Guide</h4>
+          <div class="beta-cards">
+            <div class="beta-card">
+              <div class="beta-range">0.1 – 0.3</div>
+              <div class="beta-desc">Nearly binary gates from the start; aggressive pruning</div>
+              <div class="beta-bar" style="--fill:95%"></div>
+            </div>
+            <div class="beta-card beta-mid">
+              <div class="beta-range">0.5 – 0.7 ⭐</div>
+              <div class="beta-desc">Balanced — paper default ≈ 0.667</div>
+              <div class="beta-bar" style="--fill:60%"></div>
+            </div>
+            <div class="beta-card">
+              <div class="beta-range">0.8 – 1.0</div>
+              <div class="beta-desc">Soft gates; smoother gradients; slower convergence</div>
+              <div class="beta-bar" style="--fill:25%"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── RESULTS ─────────────────────────────────────────────────────────── -->
+<section id="results" class="section">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-tag">Visualisation</div>
+      <h2 class="section-title">Results & Outputs</h2>
+      <p class="section-desc">After running <code>python main.py</code>, the <code>./outputs/</code> directory is populated with plots and reports. Here's a guide to interpreting each output.</p>
+    </div>
+
+    <div class="outputs-grid">
+      <!-- Gate distribution -->
+      <div class="output-card">
+        <div class="output-card-header">
+          <div class="output-icon" style="background: linear-gradient(135deg,#f0883e33,#f0883e11)">📊</div>
+          <div>
+            <div class="output-filename">gate_dist_lam*.png</div>
+            <div class="output-type">Gate Distribution Histogram</div>
+          </div>
+        </div>
+        <p class="output-desc">Histogram of final gate values per λ. A bimodal distribution — spike at 0 (pruned) + cluster near 1 (active) — confirms the Hard Concrete mechanism found a genuinely sparse sub-network.</p>
+        <div class="mock-hist" id="mockHist">
+          <canvas id="histCanvas" width="320" height="160"></canvas>
+        </div>
+        <div class="output-legend">
+          <span class="legend-dot" style="background:var(--orange)"></span> Gate ≈ 0 → Pruned
+          <span class="legend-dot" style="background:var(--blue);margin-left:12px"></span> Gate ≈ 1 → Active
+        </div>
+      </div>
+
+      <!-- Training curves -->
+      <div class="output-card">
+        <div class="output-card-header">
+          <div class="output-icon" style="background: linear-gradient(135deg,#58a6ff33,#58a6ff11)">📈</div>
+          <div>
+            <div class="output-filename">training_curves.png</div>
+            <div class="output-type">Training Dynamics</div>
+          </div>
+        </div>
+        <p class="output-desc">One row per λ, three columns: test accuracy / sparsity level / total loss across epochs. Watch sparsity rise as the L0 penalty drives neurons toward zero.</p>
+        <div class="mock-chart">
+          <canvas id="curveCanvas" width="320" height="160"></canvas>
+        </div>
+      </div>
+
+      <!-- Lambda comparison -->
+      <div class="output-card">
+        <div class="output-card-header">
+          <div class="output-icon" style="background: linear-gradient(135deg,#3fb95033,#3fb95011)">📉</div>
+          <div>
+            <div class="output-filename">lambda_comparison.png</div>
+            <div class="output-type">λ Trade-off Chart</div>
+          </div>
+        </div>
+        <p class="output-desc">Grouped bar chart: test accuracy (blue) vs. sparsity (orange) for each λ value. Increasing λ consistently trades some accuracy for dramatically higher sparsity.</p>
+        <div class="mock-bar">
+          <canvas id="barCanvas" width="320" height="160"></canvas>
+        </div>
+      </div>
+
+      <!-- Reports -->
+      <div class="output-card">
+        <div class="output-card-header">
+          <div class="output-icon" style="background: linear-gradient(135deg,#bc8cff33,#bc8cff11)">📄</div>
+          <div>
+            <div class="output-filename">report.md + results.json</div>
+            <div class="output-type">Analysis Reports</div>
+          </div>
+        </div>
+        <p class="output-desc">Human-readable Markdown report and machine-readable JSON summary. JSON includes gate values for histogram reconstruction, full history per epoch, and per-layer sparsities.</p>
+        <div class="report-preview">
+          <div class="rp-line"><span class="rp-hash">#</span> Self-Pruning NN — Results Report</div>
+          <div class="rp-line"><span class="rp-hash">##</span> Results Table</div>
+          <div class="rp-table">
+            <div class="rp-tr"><span>λ</span><span>Acc</span><span>Sparsity</span></div>
+            <div class="rp-tr"><span>1e-4</span><span>0.5412</span><span>30.00%</span></div>
+            <div class="rp-tr"><span>1e-3</span><span>0.5101</span><span>60.00%</span></div>
+            <div class="rp-tr"><span>5e-3</span><span>0.4732</span><span>80.00%</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── THEORY ──────────────────────────────────────────────────────────── -->
+<section id="theory" class="section dark-section">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-tag">Theory</div>
+      <h2 class="section-title">How Hard Concrete Gates Work</h2>
+      <p class="section-desc">The mathematics behind differentiable neuron-level pruning via the BinaryConcrete distribution.</p>
+    </div>
+
+    <div class="theory-grid">
+      <div class="theory-card">
+        <div class="theory-num">01</div>
+        <h3>Log-Alpha Parameter</h3>
+        <p>Each output neuron gets a learnable scalar <code>log α</code>. At initialisation, <code>log α = 0</code>, giving each neuron a 50% probability of being active — a neutral prior.</p>
+        <div class="theory-code">
+          <code>self.log_alpha = nn.Parameter(torch.zeros(n_neurons))</code>
+        </div>
+      </div>
+
+      <div class="theory-card">
+        <div class="theory-num">02</div>
+        <h3>Stochastic Gate (Training)</h3>
+        <p>During training, a soft gate is sampled via the reparameterisation trick — gradients flow through <code>log α</code> cleanly:</p>
+        <div class="theory-code">
+          <code>u ~ Uniform(0,1)<br/>s = σ((log u − log(1−u) + log α) / β)<br/>s̄ = s × (ζ − γ) + γ &nbsp;&nbsp;# stretch<br/>gate = clamp(s̄, 0, 1) &nbsp;&nbsp;# hard clamp</code>
+        </div>
+      </div>
+
+      <div class="theory-card">
+        <div class="theory-num">03</div>
+        <h3>Deterministic Gate (Inference)</h3>
+        <p>At test time, the stochasticity is removed. The gate is a hard binary decision — no randomness, fully sparse sub-network:</p>
+        <div class="theory-code">
+          <code>gate = 1[σ(log α) &gt; 0.5]</code>
+        </div>
+      </div>
+
+      <div class="theory-card">
+        <div class="theory-num">04</div>
+        <h3>L0 Penalty</h3>
+        <p>The penalty is the expected fraction of active gates. Minimising it drives <code>log α</code> negative, making neurons increasingly likely to be pruned:</p>
+        <div class="theory-code">
+          <code>L0 = Σᵢ σ(log αᵢ − β × log(−γ/ζ))</code>
+        </div>
+      </div>
+
+      <div class="theory-card">
+        <div class="theory-num">05</div>
+        <h3>Stretch Parameters</h3>
+        <p>ζ = 1.1 and γ = −0.1 are the stretch bounds from the paper. They push probability mass to exactly 0 and 1, giving truly sparse solutions — not just near-zero weights.</p>
+        <div class="theory-code">
+          <code>ζ = 1.1 &nbsp;&nbsp;# upper bound<br/>γ = −0.1 &nbsp;# lower bound<br/># P(gate = 0) &gt; 0 and P(gate = 1) &gt; 0</code>
+        </div>
+      </div>
+
+      <div class="theory-card">
+        <div class="theory-num">06</div>
+        <h3>Why It Works</h3>
+        <p>L1 on weights encourages small weights but never forces exact zeros. L0 counts non-zeros directly. The Hard Concrete makes L0 differentiable — best of both worlds.</p>
+        <div class="theory-code">
+          <code># L1 pushes weights small (not zero)<br/># L0 pushes neurons dead (exactly zero)<br/># Hard Concrete: differentiable L0 ✓</code>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reference -->
+    <div class="reference-card">
+      <div class="ref-icon">📚</div>
+      <div class="ref-body">
+        <div class="ref-title">Original Paper</div>
+        <div class="ref-cite">Louizos, C., Welling, M., &amp; Kingma, D. P. (2018). <em>Learning Sparse Neural Networks through L0 Regularization.</em> ICLR 2018.</div>
+        <a href="https://arxiv.org/abs/1712.01312" target="_blank" rel="noopener" class="ref-link">arxiv.org/abs/1712.01312 →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── QUICK START ─────────────────────────────────────────────────────── -->
+<section class="section quickstart-section">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-tag">Setup</div>
+      <h2 class="section-title">Quick Start</h2>
+    </div>
+    <div class="qs-steps">
+      <div class="qs-step">
+        <div class="qs-num">1</div>
+        <div class="qs-content">
+          <div class="qs-title">One-shot setup (Linux / macOS)</div>
+          <div class="code-block"><code>bash setup.sh --run</code></div>
+        </div>
+      </div>
+      <div class="qs-step">
+        <div class="qs-num">2</div>
+        <div class="qs-content">
+          <div class="qs-title">One-shot setup (Windows)</div>
+          <div class="code-block"><code>setup.bat --run</code></div>
+        </div>
+      </div>
+      <div class="qs-step">
+        <div class="qs-num">3</div>
+        <div class="qs-content">
+          <div class="qs-title">Custom run (5 λ values, 50 epochs)</div>
+          <div class="code-block"><code>python main.py --lambdas 1e-5 1e-4 1e-3 5e-3 1e-2 --epochs 50 --temperature 0.5</code></div>
+        </div>
+      </div>
+      <div class="qs-step">
+        <div class="qs-num">4</div>
+        <div class="qs-content">
+          <div class="qs-title">View outputs</div>
+          <div class="code-block"><code>ls ./outputs/   # report.md, results.json, *.png</code></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── IMAGE TEST ────────────────────────────────────────────────────────── -->
+<section id="test" class="section test-section">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-tag" style="color:var(--green);border-color:#3fb95033">Image Inference</div>
+      <h2 class="section-title">Test Image Classification</h2>
+      <p class="section-desc">Upload any image — the dashboard will resize it to 32×32 (CIFAR-10 format), extract pixel statistics, and simulate how the pruned network classifies it across CIFAR-10's 10 classes.</p>
+    </div>
+
+    <div class="test-grid">
+      <!-- Upload zone -->
+      <div class="upload-panel">
+        <div class="drop-zone" id="dropZone">
+          <input type="file" id="imgInput" accept="image/*" hidden />
+          <div class="drop-icon">🖼️</div>
+          <div class="drop-title">Drop an image here</div>
+          <div class="drop-sub">or <button class="drop-browse" id="browseBtn">browse files</button></div>
+          <div class="drop-hint">PNG, JPG, WEBP, GIF — any size</div>
+        </div>
+
+        <!-- Preview + processed -->
+        <div class="preview-area" id="previewArea" style="display:none">
+          <div class="preview-row">
+            <div class="preview-block">
+              <div class="preview-label">Original Upload</div>
+              <canvas id="origCanvas" width="160" height="160" class="preview-canvas"></canvas>
+            </div>
+            <div class="preview-block">
+              <div class="preview-label">32×32 CIFAR-10 Input</div>
+              <canvas id="cifar32Canvas" width="160" height="160" class="preview-canvas cifar-canvas"></canvas>
+              <div class="preview-note">Nearest-neighbour ×5 zoom</div>
+            </div>
+            <div class="preview-block">
+              <div class="preview-label">Pixel Grid</div>
+              <canvas id="gridCanvas" width="160" height="160" class="preview-canvas grid-canvas"></canvas>
+              <div class="preview-note">Channel intensity heatmap</div>
+            </div>
+          </div>
+
+          <div class="img-stats" id="imgStats">
+            <div class="img-stat"><span class="img-stat-label">Mean R</span><span class="img-stat-val" id="statR">—</span></div>
+            <div class="img-stat"><span class="img-stat-label">Mean G</span><span class="img-stat-val" id="statG">—</span></div>
+            <div class="img-stat"><span class="img-stat-label">Mean B</span><span class="img-stat-val" id="statB">—</span></div>
+            <div class="img-stat"><span class="img-stat-label">Brightness</span><span class="img-stat-val" id="statLum">—</span></div>
+            <div class="img-stat"><span class="img-stat-label">Contrast</span><span class="img-stat-val" id="statContrast">—</span></div>
+            <div class="img-stat"><span class="img-stat-label">Entropy</span><span class="img-stat-val" id="statEntropy">—</span></div>
+          </div>
+
+          <button class="btn btn-primary run-btn" id="runInferBtn">
+            <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/></svg>
+            Run Inference
+          </button>
+        </div>
+      </div>
+
+      <!-- Results -->
+      <div class="infer-results" id="inferResults" style="display:none">
+        <div class="result-header">
+          <div class="result-badge" id="resultBadge">—</div>
+          <div class="result-meta">
+            <div class="result-class" id="resultClass">Predicted Class</div>
+            <div class="result-conf" id="resultConf">—% confidence</div>
+          </div>
+        </div>
+
+        <div class="result-sparsity-row">
+          <div class="rs-item">
+            <span class="rs-label">Active neurons</span>
+            <span class="rs-val" id="rsActive">—</span>
+          </div>
+          <div class="rs-item">
+            <span class="rs-label">Pruned neurons</span>
+            <span class="rs-val orange" id="rsPruned">—</span>
+          </div>
+          <div class="rs-item">
+            <span class="rs-label">Effective sparsity</span>
+            <span class="rs-val green" id="rsSparsity">—</span>
+          </div>
+        </div>
+
+        <h4 class="prob-title">Class Probabilities</h4>
+        <div class="prob-bars" id="probBars"></div>
+
+        <div class="infer-note">
+          ⚠️ This is a <strong>client-side simulation</strong> based on image colour statistics. Real inference requires running <code>python main.py</code> with a trained model checkpoint.
+        </div>
+
+        <button class="btn btn-ghost reset-btn" id="resetBtn">↩ Upload another image</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── FOOTER ──────────────────────────────────────────────────────────── -->
+<footer class="site-footer">
+  <div class="container footer-inner">
+    <div class="footer-brand">
+      <strong>Self-Pruning NN</strong> · Hard Concrete Gates · CIFAR-10
+    </div>
+    <div class="footer-links">
+      <a href="https://arxiv.org/abs/1712.01312" target="_blank" rel="noopener">Paper (ICLR 2018)</a>
+      <a href="#overview">Top ↑</a>
+    </div>
+  </div>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>
