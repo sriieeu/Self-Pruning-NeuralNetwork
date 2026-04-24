@@ -156,4 +156,3 @@ After training, `./outputs/` contains:
 
 > Louizos, C., Welling, M., & Kingma, D. P. (2018).
 > *Learning Sparse Neural Networks through L0 Regularization.*
-> ICLR 2018. https://arxiv.org/abs/1712.01312
