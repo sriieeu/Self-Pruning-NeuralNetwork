@@ -168,6 +168,21 @@ def train(
     for k, v in layer_sp.items():
         print(f"    {k}: {v:.2%} pruned")
 
+    # Save checkpoint so the inference server can load it
+    import os
+    ckpt_dir = data_dir.replace("./data", "./outputs") if "./data" in data_dir else "./outputs"
+    os.makedirs(ckpt_dir, exist_ok=True)
+    ckpt_path = os.path.join(ckpt_dir, f"model_lam{lam:.0e}.pt")
+    torch.save({
+        "model_state_dict": model.state_dict(),
+        "lam":              lam,
+        "temperature":      temperature,
+        "test_acc":         final_acc,
+        "sparsity":         final_sparsity,
+        "layer_sparsity":   layer_sp,
+    }, ckpt_path)
+    print(f"  Checkpoint saved → {ckpt_path}")
+
     return {
         "lam":            lam,
         "temperature":    temperature,
@@ -177,3 +192,4 @@ def train(
         "gate_values":    gate_vals,
         "history":        dict(history),
     }
+
